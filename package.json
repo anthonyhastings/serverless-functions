@@ -1,0 +1,14 @@
+{
+  "name": "serverless-functions",
+  "version": "1.0.0",
+  "author": "Anthony Hastings <ar.hastings@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "axios": "0.21.1"
+  },
+  "devDependencies": {
+  }
+}

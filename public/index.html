@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Serverless Functions — Rate These Shows</title>
+    <style>
+      *,
+      *::after,
+      *::before {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        background: #fffdff;
+        color: #555055;
+        font-family: Roboto, Helvetica, Arial, sans-serif;
+        font-size: 62.5%;
+        height: 100%;
+      }
+
+      body {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 4rem 5vw;
+        text-align: center;
+      }
+
+      .app__title {
+        color: #333033;
+        font-size: 4rem;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+      }
+
+      .app__description {
+        font-size: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .spinner {
+        width: 10rem;
+      }
+
+      .shows {
+        background: #f4f4ff;
+        border: .2rem solid #c9c9de;
+        border-radius: .5rem;
+        column-gap: 4rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, min(100%, 42rem));
+        justify-content: center;
+        max-width: 96rem;
+        min-height: 20rem;
+        padding: 3rem;
+        position: relative;
+        row-gap: 4rem;
+        width: 100%;
+      }
+
+      .show {
+        align-items: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      .show__logo-wrapper {
+        margin-bottom: 1rem;
+        position: relative;
+        width: 100%;
+      }
+
+      .show__logo-wrapper::before {
+        content: '';
+        display: block;
+        height: 0;
+        padding-bottom: 51.0204%; /* 980px by 500px */
+      }
+
+      .show__logo {
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .show__details {
+        flex-grow: 1;
+        margin-bottom: 1rem;
+      }
+
+      .show__title {
+        color: #333033;
+        font-size: 2rem;
+        line-height: 1.2; /* 24px / 20px */
+        margin-bottom: 1rem;
+      }
+
+      .show__description {
+        font-size: 1.6rem;
+        font-style: italic;
+      }
+
+      .show__cta {
+        background: #2f67f8;
+        border: .2rem solid #2049d9;
+        border-radius: .5rem;
+        color: #fff;
+        cursor: pointer;
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 700;
+        padding: .5rem;
+        text-transform: uppercase;
+        transition: background 300ms, opacity 300ms;
+      }
+
+      .show__cta:hover {
+        background: #1f47ae;
+      }
+
+      .show__cta[disabled] {
+        cursor: default;
+        opacity: .75;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="app__title">Rate These Shows</h1>
+    <p class="app__description">Which announced shows are the most exciting?</p>
+    <div class="app__content"></div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="module">
+      import { h, render } from 'https://unpkg.com/preact@latest?module';
+      import { useCallback, useEffect, useState } from 'https://unpkg.com/preact@latest/hooks/dist/hooks.module.js?module';
+      import htm from 'https://unpkg.com/htm?module';
+
+      const html = htm.bind(h);
+
+      function Spinner() {
+        return html`
+          <svg class="spinner" viewBox="0 0 135 140" xmlns="http://www.w3.org/2000/svg" fill="#333333">
+              <rect y="10" width="15" height="120" rx="6">
+                  <animate attributeName="height"
+                      begin="0.5s" dur="1s"
+                      values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear"
+                      repeatCount="indefinite" />
+                  <animate attributeName="y"
+                      begin="0.5s" dur="1s"
+                      values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear"
+                      repeatCount="indefinite" />
+              </rect>
+              <rect x="30" y="10" width="15" height="120" rx="6">
+                  <animate attributeName="height"
+                      begin="0.25s" dur="1s"
+                      values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear"
+                      repeatCount="indefinite" />
+                  <animate attributeName="y"
+                      begin="0.25s" dur="1s"
+                      values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear"
+                      repeatCount="indefinite" />
+              </rect>
+              <rect x="60" width="15" height="140" rx="6">
+                  <animate attributeName="height"
+                      begin="0s" dur="1s"
+                      values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear"
+                      repeatCount="indefinite" />
+                  <animate attributeName="y"
+                      begin="0s" dur="1s"
+                      values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear"
+                      repeatCount="indefinite" />
+              </rect>
+              <rect x="90" y="10" width="15" height="120" rx="6">
+                  <animate attributeName="height"
+                      begin="0.25s" dur="1s"
+                      values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear"
+                      repeatCount="indefinite" />
+                  <animate attributeName="y"
+                      begin="0.25s" dur="1s"
+                      values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear"
+                      repeatCount="indefinite" />
+              </rect>
+              <rect x="120" y="10" width="15" height="120" rx="6">
+                  <animate attributeName="height"
+                      begin="0.5s" dur="1s"
+                      values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear"
+                      repeatCount="indefinite" />
+                  <animate attributeName="y"
+                      begin="0.5s" dur="1s"
+                      values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear"
+                      repeatCount="indefinite" />
+              </rect>
+          </svg>
+        `;
+      }
+
+      function Show({ id, title, description, logo, votes }) {
+        const [currentVotes, setCurrentVotes] = useState(votes);
+        const [isRequestInFlight, setIsRequestInFlight] = useState(false);
+
+        const onClick = useCallback(() => {
+          async function voteShow() {
+            setIsRequestInFlight(true);
+
+            let result;
+            try {
+              result = await axios.post('/.netlify/functions/vote-show', { id });
+            } catch (err) {
+              return;
+            } finally {
+              setIsRequestInFlight(false);
+            }
+
+            setCurrentVotes(result.data.data.updated.votes);
+          }
+
+          voteShow();
+        }, [id]);
+
+        return html`
+          <div className="show">
+            <div className="show__logo-wrapper">
+              <img className="show__logo" src="${logo}" alt="${title}" />
+            </div>
+            <div className="show__details">
+              <h2 className="show__title">${title}</h2>
+              <p className="show__description">${description}</p>
+            </div>
+            <button className="show__cta" onClick=${onClick} disabled=${isRequestInFlight}>
+              Chosen ${currentVotes} Time(s)
+            </button>
+          </div>
+        `;
+      };
+
+      function App() {
+        const [shows, setShows] = useState();
+        const [isLoading, setIsLoading] = useState(true);
+        const [hasErrored, setHasErrored] = useState(false);
+
+        useEffect(() => {
+          async function loadShows() {
+            let result;
+
+            try {
+              result = await axios.get('/.netlify/functions/load-shows');
+            } catch(err) {
+              setHasErrored(true);
+              return;
+            } finally {
+              setIsLoading(false);
+            }
+
+            setShows(result.data.data.shows);
+          };
+
+          loadShows();
+        }, []);
+
+        if (isLoading) return html`<${Spinner} />`;
+        if (hasErrored) return html`<h2>There has been an error :(</h2>`;
+
+        return html`
+          <div className="shows">
+            ${shows.map((showData) => html` <${Show} ...${showData} /> `)}
+          </div>
+        `;
+      };
+
+      render(
+        html`<${App} />`,
+        document.querySelector('.app__content'),
+      );
+    </script>
+  </body>
+</html>
